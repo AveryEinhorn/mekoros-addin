@@ -21,8 +21,10 @@
   </Requirements>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="taskpane.html"/>
+             <SourceLocation DefaultValue="https://averyeinhorn.github.io/mekoros-addin/taskpane.html"/>
+
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
 </OfficeApp>
+
