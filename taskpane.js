@@ -1,16 +1,39 @@
-// Placeholder JS for Option A ghost letters
-// In practice this connects to Sefaria API for suggestions
-Office.onReady(() => {
-  console.log("Mekoros Add-in loaded.");
+Office.onReady((info) => {
+    if (info.host === Office.HostType.Word) {
+        console.log("Mekoros Autocomplete loaded");
+        initAutocomplete();
+    }
 });
 
-// Example function: insert ghost text into Word
-function insertGhostText(text) {
-  Word.run(async (context) => {
-    const range = context.document.getSelection();
-    range.insertText(text, Word.InsertLocation.replace);
-    await context.sync();
-  });
+function initAutocomplete() {
+    // Attach event to selection change in Word
+    Word.run(async (context) => {
+        const body = context.document.body;
+        body.load("text");
+        await context.sync();
+
+        // Start listening for changes
+        context.document.onSelectionChanged.add(onSelectionChange);
+        await context.sync();
+    });
 }
 
-// This is just a placeholder; real Sefaria connection requires hosting
+async function onSelectionChange() {
+    Word.run(async (context) => {
+        const range = context.document.getSelection();
+        range.load("text");
+        await context.sync();
+
+        const typedText = range.text.trim();
+
+        if (!typedText || !isHebrew(typedText)) return;
+
+        const suggestion = await getSefariaSuggestion(typedText);
+        if (!suggestion) return;
+
+        // Insert ghost letters in light gray
+        insertGhostLetters(suggestion);
+    });
+}
+
+//
