@@ -1,11 +1,18 @@
 Office.onReady((info) => {
     if (info.host === Office.HostType.Word) {
-        document.getElementById("suggestButton").onclick = insertSource;
-        console.log("Mekoros Autocomplete ready (Option 1)");
+        console.log("Mekoros Fast Option 1 ready");
+
+        // Listen for keypresses (Tab or Enter)
+        document.addEventListener("keydown", async (e) => {
+            if (e.key === "Tab" || e.key === "Enter") {
+                e.preventDefault(); // prevent default behavior
+                await insertSefariaSource();
+            }
+        });
     }
 });
 
-async function insertSource() {
+async function insertSefariaSource() {
     try {
         await Word.run(async (context) => {
             const range = context.document.getSelection();
@@ -16,15 +23,10 @@ async function insertSource() {
             if (!typedText) return;
 
             const suggestion = await getSefariaSuggestion(typedText);
-            if (!suggestion) {
-                console.log("No source found for:", typedText);
-                return;
-            }
+            if (!suggestion) return;
 
-            // Insert the source in Word
             const fullText = suggestion.text + " (" + suggestion.sefer + ")";
             range.insertText(fullText, Word.InsertLocation.replace);
-
             await context.sync();
         });
     } catch (e) {
@@ -32,12 +34,6 @@ async function insertSource() {
     }
 }
 
-// Simple check for Hebrew letters (not strictly necessary here)
-function isHebrew(text) {
-    return /[\u0590-\u05FF]/.test(text);
-}
-
-// Fetch suggestion from Sefaria API
 async function getSefariaSuggestion(query) {
     try {
         const searchUrl = `https://www.sefaria.org/api/search?query=${encodeURIComponent(query)}&size=1`;
@@ -50,16 +46,13 @@ async function getSefariaSuggestion(query) {
         const ref = firstHit.ref;
         const seferName = ref.split(":")[0] || "ספֵר";
 
-        // Fetch the actual text
         const textUrl = `https://www.sefaria.org/api/texts/${encodeURIComponent(ref)}?context=0`;
         const textResp = await fetch(textUrl);
         const textData = await textResp.json();
 
         if (!textData.text) return null;
 
-        // Join first 50 words
         const suggestionText = textData.text.join(" ").split(" ").slice(0, 50).join(" ");
-
         return { text: suggestionText, sefer: seferName };
     } catch (e) {
         console.error("Sefaria fetch error:", e);
