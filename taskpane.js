@@ -1,14 +1,8 @@
 Office.onReady((info) => {
     if (info.host === Office.HostType.Word) {
-        console.log("Mekoros Fast Option 1 ready");
-
-        // Listen for keypresses (Tab or Enter)
-        document.addEventListener("keydown", async (e) => {
-            if (e.key === "Tab" || e.key === "Enter") {
-                e.preventDefault(); // prevent default behavior
-                await insertSefariaSource();
-            }
-        });
+        console.log("Mekoros Option 1 ready");
+        const btn = document.getElementById("suggestButton");
+        btn.addEventListener("click", insertSefariaSource);
     }
 });
 
@@ -20,17 +14,19 @@ async function insertSefariaSource() {
             await context.sync();
 
             const typedText = range.text.trim();
-            if (!typedText) return;
+            if (!typedText) return alert("Please select or type Hebrew words first.");
 
             const suggestion = await getSefariaSuggestion(typedText);
-            if (!suggestion) return;
+            if (!suggestion) return alert("No source found.");
 
             const fullText = suggestion.text + " (" + suggestion.sefer + ")";
             range.insertText(fullText, Word.InsertLocation.replace);
+
             await context.sync();
         });
     } catch (e) {
         console.error(e);
+        alert("Error inserting source: " + e.message);
     }
 }
 
